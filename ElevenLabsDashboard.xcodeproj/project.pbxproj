@@ -1,0 +1,282 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BF0000000000000000000001 /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000011 /* AppViewModel.swift */; };
+		BF0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000012 /* ContentView.swift */; };
+		BF0000000000000000000003 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000013 /* DashboardView.swift */; };
+		BF0000000000000000000004 /* EarningsByVoiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000014 /* EarningsByVoiceView.swift */; };
+		BF0000000000000000000005 /* ElevenLabsDashboardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000015 /* ElevenLabsDashboardApp.swift */; };
+		BF0000000000000000000006 /* ElevenLabsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000016 /* ElevenLabsService.swift */; };
+		BF0000000000000000000007 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000017 /* KeychainService.swift */; };
+		BF0000000000000000000008 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000018 /* Models.swift */; };
+		BF0000000000000000000009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR0000000000000000000019 /* SettingsView.swift */; };
+		BF000000000000000000000A /* VoiceComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR000000000000000000001A /* VoiceComparisonView.swift */; };
+		BF000000000000000000000B /* HourlyBucketsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR000000000000000000001B /* HourlyBucketsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		FR000000000000000000000F /* ElevenLabsDashboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ElevenLabsDashboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FR0000000000000000000011 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		FR0000000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FR0000000000000000000013 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		FR0000000000000000000014 /* EarningsByVoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarningsByVoiceView.swift; sourceTree = "<group>"; };
+		FR0000000000000000000015 /* ElevenLabsDashboardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsDashboardApp.swift; sourceTree = "<group>"; };
+		FR0000000000000000000016 /* ElevenLabsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsService.swift; sourceTree = "<group>"; };
+		FR0000000000000000000017 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		FR0000000000000000000018 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		FR0000000000000000000019 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FR000000000000000000001A /* VoiceComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceComparisonView.swift; sourceTree = "<group>"; };
+		FR000000000000000000001B /* HourlyBucketsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HourlyBucketsView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		PH000000000000000000000D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		GR0000000000000000000003 = {
+			isa = PBXGroup;
+			children = (
+				GR0000000000000000000004 /* ElevenLabsDashboard */,
+				GR0000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		GR0000000000000000000004 /* ElevenLabsDashboard */ = {
+			isa = PBXGroup;
+			children = (
+				FR0000000000000000000015 /* ElevenLabsDashboardApp.swift */,
+				FR0000000000000000000012 /* ContentView.swift */,
+				FR0000000000000000000013 /* DashboardView.swift */,
+				FR0000000000000000000014 /* EarningsByVoiceView.swift */,
+				FR000000000000000000001A /* VoiceComparisonView.swift */,
+				FR000000000000000000001B /* HourlyBucketsView.swift */,
+				FR0000000000000000000019 /* SettingsView.swift */,
+				FR0000000000000000000011 /* AppViewModel.swift */,
+				FR0000000000000000000018 /* Models.swift */,
+				FR0000000000000000000016 /* ElevenLabsService.swift */,
+				FR0000000000000000000017 /* KeychainService.swift */,
+			);
+			sourceTree = "<group>";
+		};
+		GR0000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FR000000000000000000000F /* ElevenLabsDashboard.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		TG000000000000000000000E /* ElevenLabsDashboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CL0000000000000000000022 /* Build configuration list for PBXNativeTarget "ElevenLabsDashboard" */;
+			buildPhases = (
+				PH000000000000000000000B /* Sources */,
+				PH000000000000000000000D /* Frameworks */,
+				PH000000000000000000000C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ElevenLabsDashboard;
+			productName = ElevenLabsDashboard;
+			productReference = FR000000000000000000000F /* ElevenLabsDashboard.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		PR0000000000000000000002 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					TG000000000000000000000E = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+				};
+			};
+			buildConfigurationList = CL0000000000000000000021 /* Build configuration list for PBXProject "ElevenLabsDashboard" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = GR0000000000000000000003;
+			productRefGroup = GR0000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				TG000000000000000000000E /* ElevenLabsDashboard */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		PH000000000000000000000C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		PH000000000000000000000B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF0000000000000000000001 /* AppViewModel.swift in Sources */,
+				BF0000000000000000000002 /* ContentView.swift in Sources */,
+				BF0000000000000000000003 /* DashboardView.swift in Sources */,
+				BF0000000000000000000004 /* EarningsByVoiceView.swift in Sources */,
+				BF0000000000000000000005 /* ElevenLabsDashboardApp.swift in Sources */,
+				BF0000000000000000000006 /* ElevenLabsService.swift in Sources */,
+				BF0000000000000000000007 /* KeychainService.swift in Sources */,
+				BF0000000000000000000008 /* Models.swift in Sources */,
+				BF0000000000000000000009 /* SettingsView.swift in Sources */,
+				BF000000000000000000000A /* VoiceComparisonView.swift in Sources */,
+				BF000000000000000000000B /* HourlyBucketsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		BC0000000000000000000023 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ElevenLabsDashboard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.0.2.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.knoxster.ElevenLabsDashboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BC0000000000000000000024 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ElevenLabsDashboard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.0.2.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.knoxster.ElevenLabsDashboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		BC0000000000000000000025 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		BC0000000000000000000026 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CL0000000000000000000021 /* Build configuration list for PBXProject "ElevenLabsDashboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC0000000000000000000025 /* Debug */,
+				BC0000000000000000000026 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CL0000000000000000000022 /* Build configuration list for PBXNativeTarget "ElevenLabsDashboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC0000000000000000000023 /* Debug */,
+				BC0000000000000000000024 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = PR0000000000000000000002 /* Project object */;
+}

@@ -103,18 +103,36 @@ struct VoiceComparisonView: View {
                 }
 
                 if earnings.isEmpty {
-                    ContentUnavailableView(
-                        "No Comparison Data",
-                        systemImage: "chart.bar.xaxis",
-                        description: Text("No character usage data found. Make sure your professional voice clones are shared in the Voice Library and have been used by other users.")
-                    )
-                    .frame(height: 300)
+                    VStack(spacing: 8) {
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                        Text("No Comparison Data")
+                            .font(.headline)
+                        Text("No character usage data found. Make sure your professional voice clones are shared in the Voice Library and have been used by other users.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 300)
                 } else {
                     // MARK: Main Chart
                     switch chartType {
                     case .bar:  BarComparisonChart(earnings: earnings)
                     case .line: LineComparisonChart(buckets: buckets, period: selectedPeriod)
-                    case .pie:  PieComparisonChart(earnings: earnings, total: total)
+                    case .pie:
+                        if #available(macOS 14.0, *) {
+                            PieComparisonChart(earnings: earnings, total: total)
+                        } else {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Earnings Share by Voice")
+                                    .font(.headline)
+                                Text("Donut chart requires macOS 14+. Showing bar chart instead.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                BarComparisonChart(earnings: earnings)
+                            }
+                        }
                     }
 
                     // MARK: Ranked Table
@@ -240,6 +258,7 @@ struct LineComparisonChart: View {
 
 // MARK: - Pie / Donut Chart
 
+@available(macOS 14.0, *)
 struct PieComparisonChart: View {
     let earnings: [VoiceEarnings]
     let total: Double

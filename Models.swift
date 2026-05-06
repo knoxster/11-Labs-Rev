@@ -11,6 +11,53 @@ struct VoiceListResponse: Codable {
     let voices: [Voice]
 }
 
+struct SharedVoiceListResponse: Codable {
+    let voices: [SharedVoice]
+}
+
+struct SharedVoice: Codable, Hashable {
+    let publicOwnerID: String?
+    let voiceId: String
+    let name: String
+    let clonedByCount: Int?
+    let usageCharacterCount7d: Double?
+    let usageCharacterCount1y: Double?
+    let rate: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case publicOwnerID = "public_owner_id"
+        case voiceId = "voice_id"
+        case name
+        case clonedByCount = "cloned_by_count"
+        case usageCharacterCount7d = "usage_character_count_7d"
+        case usageCharacterCount1y = "usage_character_count_1y"
+        case rate
+    }
+}
+
+struct ElevenLabsAccount: Identifiable, Codable, Hashable {
+    let id: String
+    var name: String
+}
+
+struct PayoutRecord: Identifiable, Codable, Hashable {
+    let id: String
+    let timestamp: Date
+    let amount: Double
+    let currencyCode: String
+}
+
+struct HourlyVoiceBucket: Identifiable, Codable, Hashable {
+    let voiceId: String
+    let voiceName: String
+    let timestamp: Date
+    let characters: Double
+    let estimatedEarnings: Double
+    let requestCount: Double?
+
+    var id: String { "\(voiceId)-\(Int(timestamp.timeIntervalSince1970))" }
+}
+
 struct Voice: Identifiable, Codable, Hashable {
     let voiceId: String
     let name: String
@@ -46,6 +93,8 @@ struct VoiceSharing: Codable, Hashable {
     let rate: Double?
     let likedByCount: Int?
     let clonedByCount: Int?
+    let usageCharacterCount7d: Double?
+    let usageCharacterCount1y: Double?
     let historyCostTokens: Int?
     let originalVoiceId: String?
     let publicOwnerID: String?
@@ -55,6 +104,8 @@ struct VoiceSharing: Codable, Hashable {
         case status, rate
         case likedByCount = "liked_by_count"
         case clonedByCount = "cloned_by_count"
+        case usageCharacterCount7d = "usage_character_count_7d"
+        case usageCharacterCount1y = "usage_character_count_1y"
         case historyCostTokens = "history_cost_tokens"
         case originalVoiceId = "original_voice_id"
         case publicOwnerID = "public_owner_id"
@@ -80,6 +131,7 @@ struct UserResponse: Codable {
     let firstName: String?
     let lastName: String?
     let email: String?
+    let publicUserID: String?
 
     enum CodingKeys: String, CodingKey {
         case subscriptionTier = "xi_api_tier"
@@ -88,6 +140,7 @@ struct UserResponse: Codable {
         case firstName = "first_name"
         case lastName = "last_name"
         case email
+        case publicUserID = "public_user_id"
     }
 }
 
@@ -120,7 +173,7 @@ enum EarningsPeriod: String, CaseIterable {
 
 struct AppSettings {
     static let defaultPollingInterval: Double = 15 * 60 // 15 minutes
-    static let defaultRatePerThousand: Double = 0.03    // $0.03 per 1k chars (base EL rate)
+    static let defaultRatePerThousand: Double = 0.00801037 // Knox Dark 12-month effective USD rate per 1k chars
 
     static var pollingInterval: Double {
         get { UserDefaults.standard.double(forKey: "pollingInterval").nonZero ?? defaultPollingInterval }
@@ -153,6 +206,92 @@ struct AppSettings {
         }
         set { UserDefaults.standard.set(newValue, forKey: "lookbackMonths") }
     }
+
+    static var lastPayoutDate: Date {
+        get {
+            if let stored = UserDefaults.standard.object(forKey: "lastPayoutDate") as? Date {
+                return stored
+            }
+            return Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "lastPayoutDate") }
+    }
+
+    static var payoutTotalSinceLast: Double {
+        get { UserDefaults.standard.double(forKey: "payoutTotalSinceLast") }
+        set { UserDefaults.standard.set(newValue, forKey: "payoutTotalSinceLast") }
+    }
+
+    static var payoutWindowEndDate: Date {
+        get {
+            if let stored = UserDefaults.standard.object(forKey: "payoutWindowEndDate") as? Date {
+                return stored
+            }
+            return Date()
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "payoutWindowEndDate") }
+    }
+
+    static var elevenLabsAccounts: [ElevenLabsAccount] {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: "elevenLabsAccounts"),
+                  let decoded = try? JSONDecoder().decode([ElevenLabsAccount].self, from: data) else {
+                return []
+            }
+            return decoded
+        }
+        set {
+            if let encoded = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: "elevenLabsAccounts")
+            }
+        }
+    }
+
+    static var selectedAccountID: String? {
+        get { UserDefaults.standard.string(forKey: "selectedAccountID") }
+        set { UserDefaults.standard.set(newValue, forKey: "selectedAccountID") }
+    }
+
+    static var hasCompletedOnboarding: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasCompletedOnboarding") }
+    }
+
+    static var importedPayoutRecords: [PayoutRecord] {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: "importedPayoutRecords"),
+                  let decoded = try? JSONDecoder().decode([PayoutRecord].self, from: data) else {
+                return []
+            }
+            return decoded
+        }
+        set {
+            if let encoded = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: "importedPayoutRecords")
+            }
+        }
+    }
+
+    static func hourlyVoiceBuckets(for accountID: String?) -> [HourlyVoiceBucket] {
+        guard let accountID,
+              let data = UserDefaults.standard.data(forKey: hourlyVoiceBucketsKey(for: accountID)),
+              let decoded = try? JSONDecoder().decode([HourlyVoiceBucket].self, from: data) else {
+            return []
+        }
+        return decoded
+    }
+
+    static func setHourlyVoiceBuckets(_ buckets: [HourlyVoiceBucket], for accountID: String?) {
+        guard let accountID else { return }
+        if let encoded = try? JSONEncoder().encode(buckets) {
+            UserDefaults.standard.set(encoded, forKey: hourlyVoiceBucketsKey(for: accountID))
+        }
+    }
+
+    private static func hourlyVoiceBucketsKey(for accountID: String) -> String {
+        "hourlyVoiceBuckets_\(accountID)"
+    }
+
 }
 
 // MARK: - Helpers
@@ -172,5 +311,21 @@ extension Double {
 extension Int64 {
     var asDate: Date {
         Date(timeIntervalSince1970: Double(self) / 1000.0)
+    }
+}
+
+extension PayoutRecord {
+    func formattedAmount() -> String {
+        amount.asFormattedCurrency(currencyCode)
+    }
+}
+
+extension Double {
+    func asFormattedCurrency(_ currencyCode: String) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currencyCode
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: self)) ?? "\(currencyCode) \(String(format: "%.2f", self))"
     }
 }

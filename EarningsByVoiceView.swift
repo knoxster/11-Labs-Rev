@@ -25,6 +25,18 @@ struct EarningsByVoiceView: View {
             : viewModel.monthlyBuckets(for: name)
     }
 
+    var selectedEarning: VoiceEarnings? {
+        guard let selectedVoice else { return nil }
+        return earnings.first { $0.voice.voiceId == selectedVoice.voiceId }
+    }
+
+    var displayBuckets: [EarningsBucket] {
+        if let selectedEarning {
+            return alignedBuckets(apiBuckets: buckets, earnings: [selectedEarning])
+        }
+        return alignedBuckets(apiBuckets: buckets, earnings: earnings)
+    }
+
     var periodTotal: Double {
         earnings.reduce(0) { $0 + $1.estimatedEarnings }
     }
@@ -67,9 +79,10 @@ struct EarningsByVoiceView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                     Spacer()
                 } else {
+                    let maxEarnings = earnings.map(\.estimatedEarnings).max() ?? 0
                     List(selection: $selectedVoice) {
                         ForEach(earnings) { earning in
-                            EarningsListRow(earning: earning)
+                            EarningsListRow(earning: earning, maxEarnings: maxEarnings)
                                 .tag(earning.voice)
                         }
                     }
@@ -79,17 +92,39 @@ struct EarningsByVoiceView: View {
             .frame(minWidth: 240, maxWidth: 300)
 
             // MARK: Right — Chart Detail
-            if let selected = selectedVoice {
+            if let selected = selectedVoice, let selectedEarning {
                 VoiceDetailChart(
-                    voice: selected,
-                    buckets: buckets,
+                    earning: selectedEarning,
+                    buckets: displayBuckets,
                     period: selectedPeriod
                 )
             } else {
-                AllVoicesChart(earnings: earnings, buckets: buckets, period: selectedPeriod)
+                AllVoicesChart(earnings: earnings, buckets: displayBuckets, period: selectedPeriod)
             }
         }
         .navigationTitle("Earnings by Voice")
+    }
+
+    private func alignedBuckets(apiBuckets: [EarningsBucket], earnings: [VoiceEarnings]) -> [EarningsBucket] {
+        let expectedChars = earnings.reduce(0) { $0 + $1.characterCount }
+        guard expectedChars > 0 else { return apiBuckets }
+
+        let bucketChars = apiBuckets.reduce(0) { $0 + $1.characters }
+        let lowerBound = expectedChars * 0.8
+        let upperBound = expectedChars * 1.2
+
+        guard apiBuckets.isEmpty || bucketChars < lowerBound || bucketChars > upperBound else {
+            return apiBuckets
+        }
+
+        return earnings.map { earning in
+            EarningsBucket(
+                date: Date(),
+                voiceName: earning.voice.name,
+                characters: earning.characterCount,
+                earnings: earning.estimatedEarnings
+            )
+        }
     }
 }
 
@@ -97,6 +132,12 @@ struct EarningsByVoiceView: View {
 
 struct EarningsListRow: View {
     let earning: VoiceEarnings
+    let maxEarnings: Double
+
+    private var progressWidthFactor: Double {
+        guard maxEarnings > 0 else { return 0 }
+        return min(max(earning.estimatedEarnings / maxEarnings, 0), 1)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -120,7 +161,7 @@ struct EarningsListRow: View {
             GeometryReader { geo in
                 RoundedRectangle(cornerRadius: 2)
                     .fill(Color.blue.opacity(0.3))
-                    .frame(width: geo.size.width, height: 3)
+                    .frame(width: geo.size.width * progressWidthFactor, height: 3)
             }
             .frame(height: 3)
         }
@@ -219,20 +260,23 @@ struct AllVoicesChart: View {
 // MARK: - Single Voice Detail Chart
 
 struct VoiceDetailChart: View {
-    let voice: Voice
+    @EnvironmentObject var viewModel: AppViewModel
+    let earning: VoiceEarnings
     let buckets: [EarningsBucket]
     let period: EarningsPeriod
+
+    var voice: Voice { earning.voice }
 
     var voiceBuckets: [EarningsBucket] {
         buckets.filter { $0.voiceName == voice.name }
     }
 
     var totalEarnings: Double {
-        voiceBuckets.reduce(0) { $0 + $1.earnings }
+        earning.estimatedEarnings
     }
 
     var totalChars: Double {
-        voiceBuckets.reduce(0) { $0 + $1.characters }
+        earning.characterCount
     }
 
     var body: some View {
@@ -264,9 +308,11 @@ struct VoiceDetailChart: View {
                 // Stats row
                 HStack(spacing: 20) {
                     StatBadge(label: "Characters", value: Int(totalChars).formatted(), color: .purple)
-                    if let rate = voice.sharingRate {
-                        StatBadge(label: "Your Rate", value: "$\(String(format: "%.4f", rate))/1k", color: .orange)
-                    }
+                    StatBadge(
+                        label: "Your Rate",
+                        value: "$\(String(format: "%.6f", viewModel.ratePerThousandUsed(for: voice)))/1k",
+                        color: .orange
+                    )
                     StatBadge(label: "Buckets", value: "\(voiceBuckets.count)", color: .gray)
                 }
 
@@ -338,11 +384,19 @@ struct VoiceDetailChart: View {
                     .frame(height: 160)
 
                 } else {
-                    ContentUnavailableView(
-                        "No data for this period",
-                        systemImage: "chart.xyaxis.line",
-                        description: Text("This voice had no character usage in the selected period.")
-                    )
+                    VStack(spacing: 8) {
+                        Image(systemName: "chart.xyaxis.line")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                        Text("No data for this period")
+                            .font(.headline)
+                        Text("This voice had no character usage in the selected period.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
                 }
 
                 Spacer(minLength: 20)

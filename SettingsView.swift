@@ -1,16 +1,18 @@
 // SettingsView.swift
 // ElevenLabsDashboard
 //
-// Configure: API key, payout rate, polling interval, lookback windows.
+// Configure: accounts, payout rate, polling interval, lookback windows.
 
 import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var viewModel: AppViewModel
 
-    @State private var apiKeyInput = ""
-    @State private var showAPIKey = false
-    @State private var showSavedConfirmation = false
+    @State private var newAccountName = ""
+    @State private var newAccountKey = ""
+    @State private var showNewAccountKey = false
+    @State private var payoutPasteText = ""
+    @State private var payoutImportMessage = ""
 
     private let pollingOptions: [(label: String, minutes: Double)] = [
         ("5 minutes", 5),
@@ -23,78 +25,150 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-
-            // MARK: API Key
-            Section("ElevenLabs API Key") {
-                HStack {
-                    if showAPIKey {
-                        TextField("xi-api-key", text: $apiKeyInput)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(.body, design: .monospaced))
-                    } else {
-                        SecureField("xi-api-key", text: $apiKeyInput)
-                            .textFieldStyle(.roundedBorder)
-                    }
-
-                    Button {
-                        showAPIKey.toggle()
-                    } label: {
-                        Image(systemName: showAPIKey ? "eye.slash" : "eye")
-                    }
-                    .buttonStyle(.borderless)
-                }
-
-                HStack {
-                    Button("Save API Key") {
-                        viewModel.apiKey = apiKeyInput.trimmingCharacters(in: .whitespaces)
-                        showSavedConfirmation = true
-                        Task { await viewModel.fetchAll() }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(apiKeyInput.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                    if showSavedConfirmation {
-                        Label("Saved!", systemImage: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                            .font(.caption)
-                            .transition(.opacity)
-                    }
-
-                    Spacer()
-
-                    Link("Get API Key ↗",
-                         destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
+            Section("ElevenLabs Accounts") {
+                if viewModel.accounts.isEmpty {
+                    Text("No accounts configured yet.")
                         .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(viewModel.accounts) { account in
+                        AccountRow(account: account)
+                            .environmentObject(viewModel)
+                    }
                 }
 
-                Text("Your API key is stored securely in the macOS Keychain. It is never sent anywhere other than api.elevenlabs.io.")
+                if viewModel.accounts.count < viewModel.maxAccounts {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Add account")
+                            .font(.subheadline.bold())
+
+                        TextField("Account name", text: $newAccountName)
+                            .textFieldStyle(.roundedBorder)
+
+                        HStack {
+                            if showNewAccountKey {
+                                TextField("xi-api-key", text: $newAccountKey)
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(.body, design: .monospaced))
+                            } else {
+                                SecureField("xi-api-key", text: $newAccountKey)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+
+                            Button {
+                                showNewAccountKey.toggle()
+                            } label: {
+                                Image(systemName: showNewAccountKey ? "eye.slash" : "eye")
+                            }
+                            .buttonStyle(.borderless)
+                        }
+
+                        Button("Add Account") {
+                            let created = viewModel.addAccount(name: newAccountName, apiKey: newAccountKey)
+                            if created {
+                                newAccountName = ""
+                                newAccountKey = ""
+                            } else {
+                                viewModel.errorMessage = "Could not add account. Check inputs and max account limit (5)."
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(newAccountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || newAccountKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    .padding(.top, 8)
+                } else {
+                    Text("Maximum of 5 accounts reached.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Text("API keys are stored securely in macOS Keychain.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
-            // MARK: Payout Rate
             Section("Payout Rate") {
                 HStack {
-                    Text("Rate per 1,000 characters")
+                    Text("Global default rate per 1,000 characters")
                     Spacer()
                     HStack(spacing: 4) {
                         Text("$")
-                        TextField("0.0300", value: $viewModel.ratePerThousand, format: .number.precision(.fractionLength(4)))
+                        TextField("0.008010", value: $viewModel.ratePerThousand, format: .number.precision(.fractionLength(6)))
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: 90)
+                            .frame(width: 110)
                     }
                 }
 
-                Text("ElevenLabs pays voice creators based on the notice period you selected when sharing your voice. Your default rate is $0.03/1k chars (immediate removal). Longer notice periods earn higher rates. Find your exact rate in My Voices → View → Sharing Options.")
+                Text("Used for all voices unless a voice-specific custom rate override is entered below.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Real Revenue Allocation") {
+                DatePicker("Window start (payout start)", selection: $viewModel.lastPayoutDate, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("Window end (payout end/present)", selection: $viewModel.payoutWindowEndDate, displayedComponents: [.date, .hourAndMinute])
+
+                HStack {
+                    Text("Total payouts since last payout")
+                    Spacer()
+                    Text("$")
+                    TextField("0.00", value: $viewModel.payoutTotalSinceLast, format: .number.precision(.fractionLength(2)))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 110)
+                }
+
+                Text("This total is allocated across shared voices by each voice's percentage of character usage since the selected payout date.")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Link("Find my rate on ElevenLabs ↗",
-                     destination: URL(string: "https://elevenlabs.io/app/voice-library")!)
+                Divider()
+
+                Text("Paste payout history (date/time + amount + currency)")
                     .font(.caption)
+                    .foregroundColor(.secondary)
+
+                TextEditor(text: $payoutPasteText)
+                    .frame(minHeight: 120)
+                    .font(.system(.caption, design: .monospaced))
+
+                HStack {
+                    Button("Import Payout Rows") {
+                        payoutImportMessage = viewModel.importPayoutHistory(from: payoutPasteText)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Apply Latest Payout Cycle") {
+                        viewModel.applyLatestPayoutCycle()
+                        payoutImportMessage = "Applied latest payout cycle."
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.payoutRecords.count < 2)
+                }
+
+                if !payoutImportMessage.isEmpty {
+                    Text(payoutImportMessage)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
 
-            // MARK: Polling Interval
+            Section("Voice-Specific Custom Rates") {
+                if viewModel.voices.isEmpty {
+                    Text("Load voices first to set per-voice rates.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(viewModel.voices.filter(\.isShared).sorted(by: { $0.name < $1.name })) { voice in
+                        VoiceRateOverrideRow(voice: voice)
+                            .environmentObject(viewModel)
+                    }
+                }
+
+                Text("These overrides apply only to the currently selected account.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             Section("Auto-Refresh") {
                 Picker("Refresh every", selection: $viewModel.pollingIntervalMinutes) {
                     ForEach(pollingOptions, id: \.minutes) { opt in
@@ -114,7 +188,6 @@ struct SettingsView: View {
                 }
             }
 
-            // MARK: Lookback Windows
             Section("Data Windows") {
                 Stepper("Weekly lookback: \(AppSettings.lookbackWeeks) weeks",
                         value: Binding(
@@ -131,13 +204,8 @@ struct SettingsView: View {
                         ),
                         in: 3...36,
                         step: 3)
-
-                Text("Larger windows show more history but may take slightly longer to load.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
 
-            // MARK: Quick Links
             Section("Quick Links") {
                 HStack(spacing: 12) {
                     QuickLinkButton(
@@ -151,41 +219,86 @@ struct SettingsView: View {
                         url: "https://elevenlabs.io/app/voice-lab/instant-voice-cloning"
                     )
                     QuickLinkButton(
-                        title: "Stripe Dashboard",
-                        icon: "creditcard",
-                        url: "https://dashboard.stripe.com/balance/overview"
+                        title: "API Keys",
+                        icon: "key",
+                        url: "https://elevenlabs.io/app/settings/api-keys"
                     )
                 }
-            }
-
-            // MARK: About
-            Section("About") {
-                HStack {
-                    Text("ElevenLabs Payout Dashboard")
-                        .font(.subheadline.bold())
-                    Spacer()
-                    Text("v1.0")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                Text("Built using the official ElevenLabs REST API. Earnings are estimated from character usage data × your configured rate. Actual payout balances are managed by Stripe Connect.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
-        .onAppear {
-            apiKeyInput = viewModel.apiKey
-        }
-        .animation(.easeInOut(duration: 0.3), value: showSavedConfirmation)
-        .onChange(of: showSavedConfirmation) { newValue in
-            if newValue {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                    showSavedConfirmation = false
+    }
+}
+
+struct AccountRow: View {
+    @EnvironmentObject var viewModel: AppViewModel
+    let account: ElevenLabsAccount
+
+    @State private var name = ""
+    @State private var key = ""
+    @State private var showKey = false
+
+    var isSelected: Bool {
+        viewModel.selectedAccountID == account.id
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                TextField("Account name", text: $name)
+                    .textFieldStyle(.roundedBorder)
+
+                if isSelected {
+                    Text("Active")
+                        .font(.caption.bold())
+                        .foregroundColor(.green)
                 }
             }
+
+            HStack {
+                if showKey {
+                    TextField("Update API key (optional)", text: $key)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.caption, design: .monospaced))
+                } else {
+                    SecureField("Update API key (optional)", text: $key)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                Button {
+                    showKey.toggle()
+                } label: {
+                    Image(systemName: showKey ? "eye.slash" : "eye")
+                }
+                .buttonStyle(.borderless)
+            }
+
+            HStack {
+                Button(isSelected ? "Using" : "Use Account") {
+                    viewModel.selectAccount(accountID: account.id)
+                }
+                .buttonStyle(.bordered)
+                .disabled(isSelected)
+
+                Button("Save") {
+                    let keyToSave = key.trimmingCharacters(in: .whitespacesAndNewlines)
+                    viewModel.updateAccount(accountID: account.id, name: name, apiKey: keyToSave.isEmpty ? nil : keyToSave)
+                    key = ""
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Remove") {
+                    viewModel.removeAccount(accountID: account.id)
+                }
+                .buttonStyle(.bordered)
+                .foregroundColor(.red)
+            }
         }
+        .onAppear {
+            name = account.name
+        }
+        .padding(.vertical, 4)
     }
 }
 
@@ -211,5 +324,65 @@ struct QuickLinkButton: View {
             .background(Color.purple.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
+    }
+}
+
+struct VoiceRateOverrideRow: View {
+    @EnvironmentObject var viewModel: AppViewModel
+    let voice: Voice
+    @State private var value: String = ""
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(voice.name)
+                    .font(.subheadline)
+                if let custom = viewModel.customRate(for: voice) {
+                    Text("Custom: $\(String(format: "%.6f", custom))/1k")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("\(viewModel.rateSourceLabel(for: voice)): $\(String(format: "%.6f", viewModel.ratePerThousandUsed(for: voice)))/1k")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Spacer()
+
+            TextField("0.008010", text: $value)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 110)
+                .onSubmit { commitRate() }
+
+            Button("Save") { commitRate() }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+            Button("Clear") {
+                value = ""
+                viewModel.setCustomRate(nil, for: voice)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(viewModel.customRate(for: voice) == nil)
+        }
+        .onAppear {
+                if let custom = viewModel.customRate(for: voice) {
+                    value = String(format: "%.6f", custom)
+                }
+            }
+    }
+
+    private func commitRate() {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            viewModel.setCustomRate(nil, for: voice)
+            return
+        }
+        if let parsed = Double(trimmed), parsed > 0 {
+            viewModel.setCustomRate(parsed, for: voice)
+            value = String(format: "%.6f", parsed)
+        }
     }
 }

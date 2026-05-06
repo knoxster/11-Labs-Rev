@@ -13,6 +13,7 @@ struct ContentView: View {
         case dashboard  = "Dashboard"
         case byVoice    = "By Voice"
         case comparison = "Comparison"
+        case hourly     = "24 Hours"
         case settings   = "Settings"
 
         var icon: String {
@@ -20,17 +21,21 @@ struct ContentView: View {
             case .dashboard:  return "chart.pie.fill"
             case .byVoice:    return "waveform"
             case .comparison: return "chart.bar.xaxis"
+            case .hourly:     return "clock.fill"
             case .settings:   return "gearshape.fill"
             }
         }
     }
 
+    private var requiresOnboarding: Bool {
+        !viewModel.hasCompletedOnboarding || !viewModel.hasAPIKey
+    }
+
     var body: some View {
         NavigationSplitView {
-            // MARK: Sidebar
             List(selection: $selectedTab) {
                 Section("Overview") {
-                    ForEach([Tab.dashboard, .byVoice, .comparison], id: \.self) { tab in
+                    ForEach([Tab.dashboard, .byVoice, .comparison, .hourly], id: \.self) { tab in
                         Label(tab.rawValue, systemImage: tab.icon)
                             .tag(tab)
                     }
@@ -44,26 +49,24 @@ struct ContentView: View {
             .navigationTitle("ElevenLabs")
             .frame(minWidth: 180)
         } detail: {
-            // MARK: Detail Pane
             Group {
                 switch selectedTab {
                 case .dashboard:  DashboardView()
                 case .byVoice:    EarningsByVoiceView()
                 case .comparison: VoiceComparisonView()
+                case .hourly:     HourlyBucketsView()
                 case .settings:   SettingsView()
                 }
             }
             .environmentObject(viewModel)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        // Show API key prompt if needed
         .overlay {
-            if !viewModel.hasAPIKey {
-                NoAPIKeyBanner()
+            if requiresOnboarding {
+                FirstRunSetupView()
                     .environmentObject(viewModel)
             }
         }
-        // Toolbar
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 if viewModel.isLoading {
@@ -97,40 +100,97 @@ struct ContentView: View {
     }
 }
 
-// MARK: - No API Key Banner
-
-struct NoAPIKeyBanner: View {
+struct FirstRunSetupView: View {
     @EnvironmentObject var viewModel: AppViewModel
+
+    @State private var accountName = ""
+    @State private var apiKey = ""
+    @State private var showAPIKey = false
+    @State private var rate = "0.008010"
+    @State private var refreshMinutes: Double = 15
+    @State private var weeklyLookback: Int = 12
+    @State private var monthlyLookback: Int = 12
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.3).ignoresSafeArea()
+            Color.black.opacity(0.35).ignoresSafeArea()
 
-            VStack(spacing: 16) {
-                Image(systemName: "key.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.purple)
-
-                Text("API Key Required")
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Welcome to ElevenLabs Dashboard")
                     .font(.title2.bold())
 
-                Text("Add your ElevenLabs API key in Settings to get started.")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
+                Text("Set up your first account and defaults to get started.")
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .frame(maxWidth: 320)
 
-                HStack(spacing: 12) {
-                    Button("Open Settings") {
-                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                TextField("Account name (example: Personal)", text: $accountName)
+                    .textFieldStyle(.roundedBorder)
+
+                HStack {
+                    if showAPIKey {
+                        TextField("xi-api-key", text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(.body, design: .monospaced))
+                    } else {
+                        SecureField("xi-api-key", text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    Button {
+                        showAPIKey.toggle()
+                    } label: {
+                        Image(systemName: showAPIKey ? "eye.slash" : "eye")
+                    }
+                    .buttonStyle(.borderless)
+                }
+
+                HStack {
+                    Text("Default rate per 1,000 chars")
+                    Spacer()
+                    Text("$")
+                    TextField("0.008010", text: $rate)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 110)
+                }
+
+                Picker("Refresh every", selection: $refreshMinutes) {
+                    Text("5 minutes").tag(5.0)
+                    Text("15 minutes").tag(15.0)
+                    Text("30 minutes").tag(30.0)
+                    Text("1 hour").tag(60.0)
+                }
+
+                HStack {
+                    Stepper("Weekly lookback: \(weeklyLookback) weeks", value: $weeklyLookback, in: 4...52, step: 4)
+                    Stepper("Monthly lookback: \(monthlyLookback) months", value: $monthlyLookback, in: 3...36, step: 3)
+                }
+
+                HStack {
+                    Link("Get API Key ↗", destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
+                        .font(.caption)
+
+                    Spacer()
+
+                    Button("Complete Setup") {
+                        let parsedRate = Double(rate) ?? AppSettings.defaultRatePerThousand
+                        let created = viewModel.completeOnboarding(
+                            accountName: accountName,
+                            apiKey: apiKey,
+                            defaultRatePerThousand: parsedRate,
+                            refreshMinutes: refreshMinutes,
+                            weeklyLookback: weeklyLookback,
+                            monthlyLookback: monthlyLookback
+                        )
+                        if !created {
+                            viewModel.errorMessage = "Setup failed. Please verify account name, API key, and account limit (up to 5)."
+                        }
                     }
                     .buttonStyle(.borderedProminent)
-
-                    Link("Get API Key ↗", destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
-                        .buttonStyle(.bordered)
+                    .disabled(accountName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .padding(40)
+            .padding(24)
+            .frame(width: 600)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         }
     }

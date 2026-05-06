@@ -2,6 +2,8 @@
 
 A native macOS SwiftUI app that displays your ElevenLabs Voice Library earnings in the menu bar, title bar, and a full dashboard window.
 
+Current release: **0.0.2.1**. See `RELEASE_NOTES.md` for details.
+
 ## Requirements
 - macOS 13.0 (Ventura) or later
 - Xcode 15+
@@ -44,6 +46,7 @@ ElevenLabsDashboard/
     ├── ContentView.swift             ← Main tabbed window
     ├── DashboardView.swift           ← Overview + payout hero display
     ├── EarningsByVoiceView.swift     ← Weekly/monthly voice breakdown
+    ├── HourlyBucketsView.swift       ← Last-24-hours hourly buckets by voice
     ├── VoiceComparisonView.swift     ← Side-by-side voice revenue chart
     └── SettingsView.swift            ← API key, rate, polling config
 ```
@@ -61,13 +64,30 @@ The app uses these official public endpoints:
 - `GET /v1/usage/character-stats` — character usage broken down by voice (weekly/monthly)
 - `GET /v1/user` — account info
 
+## First-Run Setup
+
+On first launch, the app opens a setup flow that asks for:
+- Account name
+- ElevenLabs API key
+- Default payout rate per 1,000 characters
+- Auto-refresh interval
+- Weekly/monthly lookback windows
+
+The app stores account metadata in `UserDefaults` and API keys securely in Keychain.
+
+## Multi-Account Support
+
+- Supports up to **5** ElevenLabs accounts
+- Each account has its own API key and saved voice-specific custom rates
+- You can switch the active account in Settings
+
 ## Getting Your API Key
 
 1. Log in to [elevenlabs.io](https://elevenlabs.io)
 2. Click **Developers** in the left sidebar
 3. Select the **API Keys** tab
 4. Create or copy your key
-5. Paste it into Settings within the app
+5. Paste it into first-run setup or Settings within the app
 
 ## Finding Your Payout Rate
 

@@ -39,11 +39,28 @@ struct DashboardView: View {
                         color: .blue
                     )
                     SummaryCard(
-                        title: "All-Time (Est.)",
-                        value: viewModel.totalAllTimeEstimated.asFormattedEarnings(),
-                        subtitle: "\(viewModel.professionalVoices.count) professional voice(s)",
+                        title: "Since Last Payout (Allocated)",
+                        value: viewModel.totalAllocatedPayoutSinceLast.asFormattedEarnings(),
+                        subtitle: "\(viewModel.payoutAllocatedEarnings.count) shared voice(s) allocated",
                         icon: "chart.line.uptrend.xyaxis",
                         color: .purple
+                    )
+                }
+
+                HStack(spacing: 16) {
+                    SummaryCard(
+                        title: "Last 24 Hours (Cached)",
+                        value: viewModel.totalLast24HourEstimated.asFormattedEarnings(),
+                        subtitle: "\(viewModel.recentHourlyVoiceBuckets.count) bucket(s), \(Int(viewModel.totalLast24HourRequests).formatted()) request(s)",
+                        icon: "clock.badge.checkmark",
+                        color: .teal
+                    )
+                    SummaryCard(
+                        title: "Last 31 Days Payouts",
+                        value: viewModel.formattedLastThirtyOneDayPayoutTotal,
+                        subtitle: "\(viewModel.lastThirtyOneDayPayoutCount) payout row(s)",
+                        icon: "creditcard.fill",
+                        color: .green
                     )
                 }
 
@@ -121,7 +138,7 @@ struct HeroPayoutCard: View {
                 Text(
                     viewModel.manualPendingBalance > 0
                     ? "Entered manually from your Stripe dashboard"
-                    : "Based on character usage × $\(String(format: "%.4f", viewModel.ratePerThousand))/1k chars"
+                    : "Based on character usage × $\(String(format: "%.6f", viewModel.ratePerThousand))/1k chars"
                 )
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -275,8 +292,18 @@ struct VoiceRow: View {
     let voice: Voice
     @ObservedObject var viewModel: AppViewModel
 
-    var monthlyEarning: VoiceEarnings? {
-        viewModel.monthlyEarnings.first { $0.voice.voiceId == voice.voiceId || $0.voice.name == voice.name }
+    var clonedByCount: Int? { voice.sharing?.clonedByCount }
+    var usage7d: Double? { voice.sharing?.usageCharacterCount7d }
+    var usage1y: Double? { voice.sharing?.usageCharacterCount1y }
+    var appliedRate: Double { viewModel.ratePerThousandUsed(for: voice) }
+    var rateSource: String { viewModel.rateSourceLabel(for: voice) }
+    var estimatedRecentPayout: Double? {
+        guard let usage7d, usage7d > 0, appliedRate > 0 else { return nil }
+        return usage7d * appliedRate / 1000.0
+    }
+
+    var allocatedPayout: VoiceEarnings? {
+        viewModel.payoutAllocatedEarnings.first { $0.voice.voiceId == voice.voiceId || $0.voice.name == voice.name }
     }
 
     var body: some View {
@@ -290,20 +317,40 @@ struct VoiceRow: View {
                             .foregroundColor(.green)
                             .font(.caption)
                     }
-                    if let rate = voice.sharingRate {
-                        Text("$\(String(format: "%.4f", rate))/1k chars")
-                            .font(.caption)
+                    Text("\(rateSource) rate: $\(String(format: "%.6f", appliedRate))/1k chars")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                HStack(spacing: 10) {
+                    if let clonedByCount {
+                        Text("Added by: \(clonedByCount.formatted()) user(s)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    if let usage7d {
+                        Text("7d: \(Int(usage7d).formatted()) chars")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    if let usage1y {
+                        Text("1y: \(Int(usage1y).formatted()) chars")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    if let estimatedRecentPayout {
+                        Text("Est 7d payout: \(estimatedRecentPayout.asFormattedEarnings())")
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
             }
             Spacer()
-            if let earning = monthlyEarning {
+            if let earning = allocatedPayout {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(earning.estimatedEarnings.asFormattedEarnings())
                         .font(.subheadline.bold())
                         .foregroundColor(.blue)
-                    Text("this month")
+                    Text("allocated since last payout")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
