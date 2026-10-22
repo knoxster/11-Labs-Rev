@@ -16,7 +16,7 @@ struct VoiceComparisonView: View {
     enum ChartType: String, CaseIterable {
         case bar = "Bar"
         case line = "Line"
-        case pie = "Pie"
+        case pie = "Share"
     }
 
     enum SortOrder: String, CaseIterable {
@@ -114,7 +114,7 @@ struct VoiceComparisonView: View {
                     switch chartType {
                     case .bar:  BarComparisonChart(earnings: earnings)
                     case .line: LineComparisonChart(buckets: buckets, period: selectedPeriod)
-                    case .pie:  PieComparisonChart(earnings: earnings, total: total)
+                    case .pie:  EarningsShareChart(earnings: earnings, total: total)
                     }
 
                     // MARK: Ranked Table
@@ -215,9 +215,12 @@ struct LineComparisonChart: View {
                 .chartXAxis {
                     AxisMarks(values: .stride(by: period == .week ? .weekOfYear : .month)) { v in
                         AxisGridLine()
-                        AxisValueLabel(
-                            format: period == .week ? .dateTime.month().day() : .dateTime.month()
-                        )
+                        AxisValueLabel {
+                            if let date = v.as(Date.self) {
+                                Text(date.shortBucketLabel(for: period))
+                                    .font(.caption2)
+                            }
+                        }
                     }
                 }
                 .chartYAxis {
@@ -238,9 +241,9 @@ struct LineComparisonChart: View {
     }
 }
 
-// MARK: - Pie / Donut Chart
+// MARK: - Earnings Share Chart
 
-struct PieComparisonChart: View {
+struct EarningsShareChart: View {
     let earnings: [VoiceEarnings]
     let total: Double
 
@@ -249,52 +252,39 @@ struct PieComparisonChart: View {
             Text("Earnings Share by Voice")
                 .font(.headline)
 
-            HStack(spacing: 24) {
-                Chart(earnings) { e in
-                    SectorMark(
-                        angle: .value("Earnings", e.estimatedEarnings),
-                        innerRadius: .ratio(0.55),
-                        angularInset: 2
-                    )
-                    .foregroundStyle(by: .value("Voice", e.voice.name))
-                    .cornerRadius(4)
+            Chart(earnings) { e in
+                BarMark(
+                    x: .value("Share", percentage(for: e)),
+                    y: .value("Voice", e.voice.name)
+                )
+                .foregroundStyle(by: .value("Voice", e.voice.name))
+                .annotation(position: .trailing) {
+                    Text(String(format: "%.1f%%", percentage(for: e)))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .frame(width: 260, height: 260)
-
-                // Legend
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(earnings) { e in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(colorFor(index: earnings.firstIndex(where: { $0.id == e.id }) ?? 0))
-                                .frame(width: 10, height: 10)
-
-                            Text(e.voice.name)
-                                .font(.caption)
-                                .lineLimit(1)
-
-                            Spacer()
-
-                            VStack(alignment: .trailing, spacing: 0) {
-                                Text(e.estimatedEarnings.asFormattedEarnings())
-                                    .font(.caption.bold())
-                                Text(String(format: "%.1f%%", total > 0 ? (e.estimatedEarnings / total * 100) : 0))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
+            }
+            .chartXAxis {
+                AxisMarks { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let pct = value.as(Double.self) {
+                            Text("\(Int(pct))%")
+                                .font(.caption2)
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .chartLegend(.hidden)
+            .frame(height: CGFloat(earnings.count) * 36 + 40)
         }
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func colorFor(index: Int) -> Color {
-        let colors: [Color] = [.blue, .purple, .orange, .green, .red, .yellow, .pink, .teal, .indigo, .mint]
-        return colors[index % colors.count]
+    private func percentage(for earning: VoiceEarnings) -> Double {
+        guard total > 0 else { return 0 }
+        return earning.estimatedEarnings / total * 100
     }
 }
 

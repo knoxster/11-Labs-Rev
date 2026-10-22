@@ -174,3 +174,18 @@ extension Int64 {
         Date(timeIntervalSince1970: Double(self) / 1000.0)
     }
 }
+
+extension Date {
+    func shortBucketLabel(for period: EarningsPeriod, includesYearForMonth: Bool = false) -> String {
+        if period == .week {
+            return formatted(.dateTime.month(.abbreviated).day())
+        }
+
+        if includesYearForMonth {
+            return formatted(.dateTime.month(.abbreviated).year())
+        }
+
+        return formatted(.dateTime.month(.abbreviated))
+    }
+}
+
