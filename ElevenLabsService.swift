@@ -153,8 +153,13 @@ extension ElevenLabsService {
         voices: [Voice],
         ratePerThousand: Double
     ) -> [VoiceEarnings] {
-        // Build a lookup by voice name
-        let voiceByName = Dictionary(uniqueKeysWithValues: voices.map { ($0.name, $0) })
+        // Build a lookup by voice name. If duplicate display names exist, keep the
+        // first API object instead of crashing while preparing chart data.
+        let voiceByName = voices.reduce(into: [String: Voice]()) { result, voice in
+            if result[voice.name] == nil {
+                result[voice.name] = voice
+            }
+        }
 
         var results: [VoiceEarnings] = []
 

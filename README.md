@@ -18,13 +18,16 @@ A native macOS SwiftUI app that displays your ElevenLabs Voice Library earnings 
 
 ## Entitlements Required
 
-In your `.entitlements` file, ensure you have:
+This repo includes `ElevenLabsDashboard.entitlements`. In Xcode, select the app target and set **Signing & Capabilities → Entitlements File** to that file. It enables:
+
 ```xml
+<key>com.apple.security.app-sandbox</key>
+<true/>
 <key>com.apple.security.network.client</key>
 <true/>
 <key>keychain-access-groups</key>
 <array>
-    <string>$(AppIdentifierPrefix)com.yourname.ElevenLabsDashboard</string>
+    <string>$(AppIdentifierPrefix)$(CFBundleIdentifier)</string>
 </array>
 ```
 

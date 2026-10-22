@@ -193,7 +193,12 @@ struct AllVoicesChart: View {
                     .chartXAxis {
                         AxisMarks(values: .stride(by: period == .week ? .weekOfYear : .month)) { value in
                             AxisGridLine()
-                            AxisValueLabel(format: period == .week ? .dateTime.month().day() : .dateTime.month().year())
+                            AxisValueLabel {
+                                if let date = value.as(Date.self) {
+                                    Text(date.shortBucketLabel(for: period, includesYearForMonth: true))
+                                        .font(.caption2)
+                                }
+                            }
                         }
                     }
                     .chartYAxis {
@@ -291,9 +296,12 @@ struct VoiceDetailChart: View {
                     .chartXAxis {
                         AxisMarks(values: .stride(by: period == .week ? .weekOfYear : .month)) { value in
                             AxisGridLine()
-                            AxisValueLabel(
-                                format: period == .week ? .dateTime.month().day() : .dateTime.month()
-                            )
+                            AxisValueLabel {
+                                if let date = value.as(Date.self) {
+                                    Text(date.shortBucketLabel(for: period))
+                                        .font(.caption2)
+                                }
+                            }
                         }
                     }
                     .chartYAxis {
@@ -330,9 +338,12 @@ struct VoiceDetailChart: View {
                     .chartXAxis {
                         AxisMarks(values: .stride(by: period == .week ? .weekOfYear : .month)) { value in
                             AxisGridLine()
-                            AxisValueLabel(
-                                format: period == .week ? .dateTime.month().day() : .dateTime.month()
-                            )
+                            AxisValueLabel {
+                                if let date = value.as(Date.self) {
+                                    Text(date.shortBucketLabel(for: period))
+                                        .font(.caption2)
+                                }
+                            }
                         }
                     }
                     .frame(height: 160)
